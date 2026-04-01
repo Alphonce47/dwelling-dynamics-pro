@@ -3,8 +3,14 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import Landing from "./pages/Landing";
+import DashboardLayout from "./components/DashboardLayout";
+import Overview from "./pages/dashboard/Overview";
+import Properties from "./pages/dashboard/Properties";
+import Tenants from "./pages/dashboard/Tenants";
+import Payments from "./pages/dashboard/Payments";
+import Placeholder from "./pages/dashboard/Placeholder";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -15,8 +21,21 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Overview />} />
+            <Route path="properties" element={<Properties />} />
+            <Route path="tenants" element={<Tenants />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="invoices" element={<Placeholder />} />
+            <Route path="maintenance" element={<Placeholder />} />
+            <Route path="messages" element={<Placeholder />} />
+            <Route path="vacancies" element={<Placeholder />} />
+            <Route path="reports" element={<Placeholder />} />
+            <Route path="settings" element={<Placeholder />} />
+          </Route>
+          <Route path="/login" element={<Landing />} />
+          <Route path="/signup" element={<Landing />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
