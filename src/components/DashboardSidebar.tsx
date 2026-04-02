@@ -1,10 +1,12 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home, Building2, Users, CreditCard, FileText, BarChart3,
-  MessageSquare, Wrench, DoorOpen, Settings, LogOut, Bell, ChevronLeft, Menu
+  MessageSquare, Wrench, DoorOpen, Settings, LogOut, ChevronLeft, Menu
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 
 const navItems = [
   { label: "Overview", icon: Home, path: "/dashboard" },
@@ -21,8 +23,22 @@ const navItems = [
 
 export default function DashboardSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const { data: profile } = useProfile();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const initials = profile?.full_name
+    ? profile.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+    : "??";
+
+  const primaryRole = profile?.roles?.[0] ?? "user";
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   const sidebar = (
     <div
@@ -31,7 +47,6 @@ export default function DashboardSidebar() {
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
-      {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
           <Link to="/" className="flex items-center gap-2">
@@ -49,7 +64,6 @@ export default function DashboardSidebar() {
         </button>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
@@ -72,17 +86,21 @@ export default function DashboardSidebar() {
         })}
       </nav>
 
-      {/* User */}
       <div className="border-t border-sidebar-border p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-            JK
+            {initials}
           </div>
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
-              <div className="truncate text-sm font-medium text-sidebar-foreground">John Kamau</div>
-              <div className="truncate text-xs text-sidebar-foreground/50">Landlord</div>
+              <div className="truncate text-sm font-medium text-sidebar-foreground">{profile?.full_name || "Loading..."}</div>
+              <div className="truncate text-xs capitalize text-sidebar-foreground/50">{primaryRole}</div>
             </div>
+          )}
+          {!collapsed && (
+            <button onClick={handleSignOut} className="rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground" title="Sign out">
+              <LogOut className="h-4 w-4" />
+            </button>
           )}
         </div>
       </div>
@@ -91,7 +109,6 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      {/* Mobile trigger */}
       <button
         onClick={() => setMobileOpen(true)}
         className="fixed left-4 top-4 z-50 rounded-lg bg-card p-2 shadow-md lg:hidden"
@@ -99,7 +116,6 @@ export default function DashboardSidebar() {
         <Menu className="h-5 w-5 text-foreground" />
       </button>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setMobileOpen(false)}>
           <div className="absolute inset-0 bg-foreground/50" />
@@ -109,7 +125,6 @@ export default function DashboardSidebar() {
         </div>
       )}
 
-      {/* Desktop sidebar */}
       <div className="hidden lg:block h-screen sticky top-0">
         {sidebar}
       </div>
