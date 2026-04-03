@@ -176,6 +176,25 @@ export default function Properties() {
           })}
         </div>
       )}
+
+      <Dialog open={unitOpen} onOpenChange={setUnitOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Unit</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Unit Number</Label><Input value={unitForm.unit_number} onChange={(e) => setUnitForm({ ...unitForm, unit_number: e.target.value })} placeholder="e.g. A1" /></div>
+              <div><Label>Rent (KES)</Label><Input type="number" value={unitForm.rent_amount} onChange={(e) => setUnitForm({ ...unitForm, rent_amount: e.target.value })} placeholder="25000" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Bedrooms</Label><Input type="number" value={unitForm.bedrooms} onChange={(e) => setUnitForm({ ...unitForm, bedrooms: e.target.value })} /></div>
+              <div><Label>Bathrooms</Label><Input type="number" value={unitForm.bathrooms} onChange={(e) => setUnitForm({ ...unitForm, bathrooms: e.target.value })} /></div>
+            </div>
+            <Button onClick={handleCreateUnit} disabled={createUnit.isPending} className="w-full">
+              {createUnit.isPending ? "Adding..." : "Add Unit"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
