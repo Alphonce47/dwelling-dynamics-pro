@@ -1,7 +1,8 @@
-import { Building2, Plus, MapPin, Users } from "lucide-react";
+import { Building2, Plus, MapPin, Users, DoorOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useProperties, useCreateProperty } from "@/hooks/useProperties";
+import { useCreateUnit } from "@/hooks/useUnits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
