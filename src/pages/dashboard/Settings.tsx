@@ -76,9 +76,12 @@ export default function Settings() {
           <Label>Phone</Label>
           <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+254 7XX XXX XXX" />
         </div>
-        <div className="flex items-center gap-2">
-          <Badge roles={profile?.roles} />
-        </div>
+        {profile?.roles?.length ? (
+          <div>
+            <Label>Role</Label>
+            <div className="mt-1 text-sm capitalize text-card-foreground">{profile.roles.join(", ")}</div>
+          </div>
+        ) : null}
         <Button onClick={handleSaveProfile} disabled={saving}>
           {saving ? "Saving..." : "Save Changes"}
         </Button>

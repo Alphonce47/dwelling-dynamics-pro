@@ -13,6 +13,9 @@ import Overview from "./pages/dashboard/Overview";
 import Properties from "./pages/dashboard/Properties";
 import Tenants from "./pages/dashboard/Tenants";
 import Payments from "./pages/dashboard/Payments";
+import Invoices from "./pages/dashboard/Invoices";
+import Maintenance from "./pages/dashboard/Maintenance";
+import Settings from "./pages/dashboard/Settings";
 import Placeholder from "./pages/dashboard/Placeholder";
 import NotFound from "./pages/NotFound";
 
