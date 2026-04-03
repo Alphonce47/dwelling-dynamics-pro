@@ -159,6 +159,18 @@ export default function Properties() {
                     <div className="mt-1 text-xs text-muted-foreground">{Math.round((occupied / units.length) * 100)}% occupied</div>
                   </div>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full gap-1.5 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPropertyId(p.id);
+                    setUnitOpen(true);
+                  }}
+                >
+                  <DoorOpen className="h-3.5 w-3.5" /> Add Unit
+                </Button>
               </div>
             );
           })}
