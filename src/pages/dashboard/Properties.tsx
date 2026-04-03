@@ -12,8 +12,12 @@ import { toast } from "sonner";
 export default function Properties() {
   const { data: properties, isLoading } = useProperties();
   const createProperty = useCreateProperty();
+  const createUnit = useCreateUnit();
   const [open, setOpen] = useState(false);
+  const [unitOpen, setUnitOpen] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [form, setForm] = useState({ name: "", address: "", city: "Nairobi", property_type: "apartment" });
+  const [unitForm, setUnitForm] = useState({ unit_number: "", rent_amount: "", bedrooms: "1", bathrooms: "1" });
 
   const handleCreate = async () => {
     if (!form.name.trim()) return toast.error("Property name is required");
