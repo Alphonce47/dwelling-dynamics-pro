@@ -1,7 +1,8 @@
-import { Building2, Plus, MapPin, Users } from "lucide-react";
+import { Building2, Plus, MapPin, Users, DoorOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useProperties, useCreateProperty } from "@/hooks/useProperties";
+import { useCreateUnit } from "@/hooks/useUnits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +12,12 @@ import { toast } from "sonner";
 export default function Properties() {
   const { data: properties, isLoading } = useProperties();
   const createProperty = useCreateProperty();
+  const createUnit = useCreateUnit();
   const [open, setOpen] = useState(false);
+  const [unitOpen, setUnitOpen] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [form, setForm] = useState({ name: "", address: "", city: "Nairobi", property_type: "apartment" });
+  const [unitForm, setUnitForm] = useState({ unit_number: "", rent_amount: "", bedrooms: "1", bathrooms: "1" });
 
   const handleCreate = async () => {
     if (!form.name.trim()) return toast.error("Property name is required");
@@ -23,6 +28,24 @@ export default function Properties() {
       setForm({ name: "", address: "", city: "Nairobi", property_type: "apartment" });
     } catch (err: any) {
       toast.error(err.message || "Failed to create property");
+    }
+  };
+
+  const handleCreateUnit = async () => {
+    if (!unitForm.unit_number.trim()) return toast.error("Unit number is required");
+    try {
+      await createUnit.mutateAsync({
+        property_id: selectedPropertyId,
+        unit_number: unitForm.unit_number,
+        rent_amount: Number(unitForm.rent_amount) || 0,
+        bedrooms: Number(unitForm.bedrooms) || 1,
+        bathrooms: Number(unitForm.bathrooms) || 1,
+      });
+      toast.success("Unit added");
+      setUnitOpen(false);
+      setUnitForm({ unit_number: "", rent_amount: "", bedrooms: "1", bathrooms: "1" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add unit");
     }
   };
 
@@ -136,11 +159,42 @@ export default function Properties() {
                     <div className="mt-1 text-xs text-muted-foreground">{Math.round((occupied / units.length) * 100)}% occupied</div>
                   </div>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full gap-1.5 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPropertyId(p.id);
+                    setUnitOpen(true);
+                  }}
+                >
+                  <DoorOpen className="h-3.5 w-3.5" /> Add Unit
+                </Button>
               </div>
             );
           })}
         </div>
       )}
+
+      <Dialog open={unitOpen} onOpenChange={setUnitOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Unit</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Unit Number</Label><Input value={unitForm.unit_number} onChange={(e) => setUnitForm({ ...unitForm, unit_number: e.target.value })} placeholder="e.g. A1" /></div>
+              <div><Label>Rent (KES)</Label><Input type="number" value={unitForm.rent_amount} onChange={(e) => setUnitForm({ ...unitForm, rent_amount: e.target.value })} placeholder="25000" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Bedrooms</Label><Input type="number" value={unitForm.bedrooms} onChange={(e) => setUnitForm({ ...unitForm, bedrooms: e.target.value })} /></div>
+              <div><Label>Bathrooms</Label><Input type="number" value={unitForm.bathrooms} onChange={(e) => setUnitForm({ ...unitForm, bathrooms: e.target.value })} /></div>
+            </div>
+            <Button onClick={handleCreateUnit} disabled={createUnit.isPending} className="w-full">
+              {createUnit.isPending ? "Adding..." : "Add Unit"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
