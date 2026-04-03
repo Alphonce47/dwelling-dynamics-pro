@@ -44,12 +44,12 @@ const App = () => (
               <Route path="properties" element={<Properties />} />
               <Route path="tenants" element={<Tenants />} />
               <Route path="payments" element={<Payments />} />
-              <Route path="invoices" element={<Placeholder />} />
-              <Route path="maintenance" element={<Placeholder />} />
+              <Route path="invoices" element={<Invoices />} />
+              <Route path="maintenance" element={<Maintenance />} />
               <Route path="messages" element={<Placeholder />} />
               <Route path="vacancies" element={<Placeholder />} />
               <Route path="reports" element={<Placeholder />} />
-              <Route path="settings" element={<Placeholder />} />
+              <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
