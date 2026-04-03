@@ -31,7 +31,24 @@ export default function Properties() {
     }
   };
 
-  if (isLoading) {
+  const handleCreateUnit = async () => {
+    if (!unitForm.unit_number.trim()) return toast.error("Unit number is required");
+    try {
+      await createUnit.mutateAsync({
+        property_id: selectedPropertyId,
+        unit_number: unitForm.unit_number,
+        rent_amount: Number(unitForm.rent_amount) || 0,
+        bedrooms: Number(unitForm.bedrooms) || 1,
+        bathrooms: Number(unitForm.bathrooms) || 1,
+      });
+      toast.success("Unit added");
+      setUnitOpen(false);
+      setUnitForm({ unit_number: "", rent_amount: "", bedrooms: "1", bathrooms: "1" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add unit");
+    }
+  };
+
     return (
       <div className="flex items-center justify-center py-20">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
