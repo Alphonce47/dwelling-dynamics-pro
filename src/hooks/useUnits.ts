@@ -1,5 +1,19 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+export function useUnits(propertyId?: string) {
+  return useQuery({
+    queryKey: ["units", propertyId],
+    queryFn: async () => {
+      let query = supabase.from("units").select("*").order("unit_number");
+      if (propertyId) query = query.eq("property_id", propertyId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!propertyId,
+  });
+}
 
 export function useCreateUnit() {
   const queryClient = useQueryClient();

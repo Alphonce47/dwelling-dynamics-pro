@@ -16,7 +16,9 @@ import Payments from "./pages/dashboard/Payments";
 import Invoices from "./pages/dashboard/Invoices";
 import Maintenance from "./pages/dashboard/Maintenance";
 import Settings from "./pages/dashboard/Settings";
-import Placeholder from "./pages/dashboard/Placeholder";
+import Messages from "./pages/dashboard/Messages";
+import Vacancies from "./pages/dashboard/Vacancies";
+import Reports from "./pages/dashboard/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,9 +48,9 @@ const App = () => (
               <Route path="payments" element={<Payments />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="maintenance" element={<Maintenance />} />
-              <Route path="messages" element={<Placeholder />} />
-              <Route path="vacancies" element={<Placeholder />} />
-              <Route path="reports" element={<Placeholder />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="vacancies" element={<Vacancies />} />
+              <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
