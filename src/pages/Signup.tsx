@@ -20,7 +20,7 @@ export default function Signup() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -31,8 +31,11 @@ export default function Signup() {
     setLoading(false);
     if (error) {
       toast({ title: "Signup failed", description: error.message, variant: "destructive" });
+    } else if (data.session) {
+      // Email confirmation is disabled — user is signed in immediately
+      navigate("/dashboard");
     } else {
-      toast({ title: "Account created!", description: "Check your email to confirm, or sign in." });
+      toast({ title: "Account created!", description: "Check your email and click the confirmation link to sign in." });
       navigate("/login");
     }
   };
