@@ -18,11 +18,21 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const redirectAfterLogin = async (userId: string) => {
+    // Check if this user has a tenant record — if so, send them to tenant portal
+    const { data } = await supabase.from("tenants").select("id").eq("user_id", userId).maybeSingle();
+    if (data) {
+      navigate("/tenant");
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setUnconfirmed(false);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       if (error.message.toLowerCase().includes("email not confirmed")) {
@@ -30,8 +40,8 @@ export default function Login() {
       } else {
         toast({ title: "Login failed", description: error.message, variant: "destructive" });
       }
-    } else {
-      navigate("/dashboard");
+    } else if (data.user) {
+      await redirectAfterLogin(data.user.id);
     }
   };
 
@@ -77,9 +87,7 @@ export default function Login() {
               <span className="font-heading text-xl font-bold text-foreground">NyumbaHub</span>
             </Link>
             <h1 className="font-heading text-2xl font-bold text-foreground">Reset password</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Enter your email and we'll send you a reset link
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Enter your email and we'll send you a reset link</p>
           </div>
 
           {resetSent ? (

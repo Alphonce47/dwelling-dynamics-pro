@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Home, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { linkTenantByEmail } from "@/hooks/useTenantRecord";
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
@@ -20,6 +21,7 @@ export default function Signup() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -28,14 +30,29 @@ export default function Signup() {
         emailRedirectTo: window.location.origin,
       },
     });
+
     setLoading(false);
+
     if (error) {
       toast({ title: "Signup failed", description: error.message, variant: "destructive" });
-    } else if (data.session) {
-      // Email confirmation is disabled — user is signed in immediately
-      navigate("/dashboard");
+      return;
+    }
+
+    if (data.session && data.user) {
+      // Email confirmation disabled — user is signed in immediately
+      if (role === "tenant") {
+        // Try to auto-link this auth account to an existing tenant record by email
+        await linkTenantByEmail(data.user.id, email);
+        navigate("/tenant");
+      } else {
+        navigate("/dashboard");
+      }
     } else {
-      toast({ title: "Account created!", description: "Check your email and click the confirmation link to sign in." });
+      // Email confirmation required
+      toast({
+        title: "Account created!",
+        description: "Check your email and click the confirmation link to sign in.",
+      });
       navigate("/login");
     }
   };
@@ -50,8 +67,8 @@ export default function Signup() {
             </div>
             <span className="font-heading text-xl font-bold text-foreground">NyumbaHub</span>
           </Link>
-          <h1 className="font-heading text-2xl font-bold text-foreground">Start your free trial</h1>
-          <p className="mt-2 text-sm text-muted-foreground">No credit card required</p>
+          <h1 className="font-heading text-2xl font-bold text-foreground">Create your account</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Get started with NyumbaHub</p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
@@ -77,6 +94,11 @@ export default function Signup() {
                 <SelectItem value="tenant">Tenant</SelectItem>
               </SelectContent>
             </Select>
+            {role === "tenant" && (
+              <p className="text-xs text-muted-foreground">
+                Use the same email your landlord has on file so your account links automatically.
+              </p>
+            )}
           </div>
           <Button variant="hero" className="w-full" type="submit" disabled={loading}>
             {loading ? "Creating account..." : "Create Account"}

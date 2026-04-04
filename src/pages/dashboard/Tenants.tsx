@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Users, Plus, Search, Phone, Mail, Pencil, Trash2, X, FileText, CreditCard, BookOpen } from "lucide-react";
+import { Users, Plus, Search, Phone, Mail, Pencil, Trash2, X, FileText, CreditCard, Share2, Copy, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTenants, useCreateTenant, useUpdateTenant, useDeleteTenant } from "@/hooks/useTenants";
@@ -28,6 +28,8 @@ export default function Tenants() {
   const createLease = useCreateLease();
 
   const [search, setSearch] = useState("");
+  const [inviteTenant, setInviteTenant] = useState<any>(null);
+  const [copiedSignup, setCopiedSignup] = useState(false);
   const [open, setOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<any>(null);
   const [form, setForm] = useState(emptyTenantForm);
@@ -391,6 +393,14 @@ export default function Tenants() {
                   <Button variant="outline" className="flex-1 gap-1.5" onClick={() => openEdit(selectedTenant)}>
                     <Pencil className="h-4 w-4" /> Edit Tenant
                   </Button>
+                  <Button
+                    variant="outline"
+                    className="gap-1.5"
+                    title="Share portal access"
+                    onClick={() => setInviteTenant(selectedTenant)}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
                   <Button variant="outline" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => handleDelete(selectedTenant.id, selectedTenant.full_name)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -417,6 +427,72 @@ export default function Tenants() {
             <Button onClick={handleCreateLease} disabled={createLease.isPending} className="w-full">
               {createLease.isPending ? "Creating..." : "Create Lease"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite / Share Portal Access Dialog */}
+      <Dialog open={!!inviteTenant} onOpenChange={(o) => { if (!o) { setInviteTenant(null); setCopiedSignup(false); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Portal Access — {inviteTenant?.full_name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Send these instructions to your tenant so they can sign in and view their invoices, payments, and maintenance requests.
+            </p>
+
+            <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2">
+              <p className="font-medium text-foreground">Steps for {inviteTenant?.full_name}:</p>
+              <ol className="list-decimal pl-4 space-y-1.5 text-muted-foreground">
+                <li>Go to <span className="font-mono font-medium text-foreground">{window.location.origin}/signup</span></li>
+                <li>
+                  Sign up using this email:{" "}
+                  <span className="font-mono font-medium text-foreground">
+                    {inviteTenant?.email || "(no email on file — please edit tenant and add an email first)"}
+                  </span>
+                </li>
+                <li>Select <span className="font-medium text-foreground">"Tenant"</span> as your account type</li>
+                <li>Your account will automatically link to this property</li>
+              </ol>
+            </div>
+
+            {!inviteTenant?.email && (
+              <div className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm text-warning">
+                No email saved for this tenant. Edit the tenant first and add their email address.
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={() => {
+                  const link = `${window.location.origin}/signup`;
+                  navigator.clipboard.writeText(link);
+                  setCopiedSignup(true);
+                  setTimeout(() => setCopiedSignup(false), 2000);
+                }}
+              >
+                {copiedSignup ? (
+                  <><CheckCircle2 className="h-4 w-4 text-success" /> Copied!</>
+                ) : (
+                  <><Copy className="h-4 w-4" /> Copy Signup Link</>
+                )}
+              </Button>
+              {inviteTenant?.email && (
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    const body = `Hi ${inviteTenant.full_name},\n\nYou can now access your tenant portal on NyumbaHub to view your invoices, payments, and maintenance requests.\n\n1. Go to ${window.location.origin}/signup\n2. Sign up using this email: ${inviteTenant.email}\n3. Select "Tenant" as your account type\n\nYour account will automatically link to your rental unit.`;
+                    window.open(`mailto:${inviteTenant.email}?subject=Access your NyumbaHub tenant portal&body=${encodeURIComponent(body)}`);
+                  }}
+                >
+                  <Mail className="h-4 w-4" /> Open Email
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
