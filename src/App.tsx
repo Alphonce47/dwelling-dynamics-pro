@@ -16,7 +16,9 @@ import Payments from "./pages/dashboard/Payments";
 import Invoices from "./pages/dashboard/Invoices";
 import Maintenance from "./pages/dashboard/Maintenance";
 import Settings from "./pages/dashboard/Settings";
-import Placeholder from "./pages/dashboard/Placeholder";
+import Messages from "./pages/dashboard/Messages";
+import Vacancies from "./pages/dashboard/Vacancies";
+import Reports from "./pages/dashboard/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
