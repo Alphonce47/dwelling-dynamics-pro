@@ -34,12 +34,24 @@ npm run build # Build for production
 
 ## Features
 
-- Property and unit management
-- Tenant management and leases
-- Rent invoicing and payment tracking (M-Pesa, bank transfers, cash)
+- Property and unit management (CRUD: add/edit/delete property + units, occupancy progress bar)
+- Tenant management (CRUD: add/edit/delete tenant; clickable row drawer showing unit, lease, invoices, payment history)
+- Lease creation from the Tenant detail drawer
+- Rent invoicing: create, update status (dropdown badge), delete, bulk generate for all active tenants
+- Payment tracking: record payment (with invoice linking), CSV export; M-Pesa, bank, cash, international
+- Dashboard: KPI cards, monthly collection progress bar, overdue alert, occupancy chart, recent payments
 - Maintenance request tracking
 - Internal messaging
 - Vacancy listings with shareable tokens
 - Financial reports
+- Forgot password / reset password flow
 - Role-based access (admin, landlord, manager, accountant, viewer, tenant)
-- SMS notifications via Africa's Talking
+
+## Hooks
+
+- `useProperties` / `useCreateProperty` / `useUpdateProperty` / `useDeleteProperty`
+- `useUnits` / `useCreateUnit` / `useUpdateUnit` / `useDeleteUnit` / `useUpdateUnitStatus`
+- `useTenants` / `useCreateTenant` / `useUpdateTenant` / `useDeleteTenant`
+- `useLeases` / `useCreateLease` / `useUpdateLeaseStatus`
+- `useInvoices` / `useCreateInvoice` / `useUpdateInvoiceStatus` / `useDeleteInvoice` / `useBulkCreateInvoices`
+- `usePayments` / `useRecordPayment` / `useDeletePayment`

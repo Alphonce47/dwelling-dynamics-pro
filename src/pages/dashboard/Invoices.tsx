@@ -1,13 +1,14 @@
-import { FileText, Plus } from "lucide-react";
+import { useState } from "react";
+import { FileText, Plus, Trash2, RefreshCw, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
-import { useInvoices, useCreateInvoice } from "@/hooks/useInvoices";
-import { useTenants } from "@/hooks/useTenants";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useDeleteInvoice, useBulkCreateInvoices } from "@/hooks/useInvoices";
+import { useTenants } from "@/hooks/useTenants";
 import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
@@ -18,10 +19,16 @@ const statusColors: Record<string, string> = {
   partial: "bg-info/10 text-info border-0",
 };
 
+const statusOptions = ["pending", "paid", "overdue", "partial", "cancelled"];
+
 export default function Invoices() {
   const { data: invoices, isLoading } = useInvoices();
   const { data: tenants } = useTenants();
   const createInvoice = useCreateInvoice();
+  const updateStatus = useUpdateInvoiceStatus();
+  const deleteInvoice = useDeleteInvoice();
+  const bulkCreate = useBulkCreateInvoices();
+
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ tenant_id: "", amount: "", due_date: "", invoice_number: "", notes: "" });
 
@@ -44,6 +51,59 @@ export default function Invoices() {
     }
   };
 
+  const handleUpdateStatus = async (id: string, status: string) => {
+    try {
+      await updateStatus.mutateAsync({ id, status });
+      toast.success(`Invoice marked as ${status}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update status");
+    }
+  };
+
+  const handleDelete = async (id: string, invoiceNumber: string) => {
+    if (!confirm(`Delete invoice ${invoiceNumber}? This cannot be undone.`)) return;
+    try {
+      await deleteInvoice.mutateAsync(id);
+      toast.success("Invoice deleted");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete invoice");
+    }
+  };
+
+  const handleBulkGenerate = async () => {
+    const today = new Date();
+    const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 1).toISOString().slice(0, 10);
+    const monthLabel = today.toLocaleString("default", { month: "long", year: "numeric" });
+
+    const activeTenants = tenants?.filter((t) => {
+      const activeLease = (t.leases as any[])?.find((l: any) => l.status === "active");
+      return t.unit_id && activeLease;
+    }) ?? [];
+
+    if (!activeTenants.length) {
+      return toast.error("No tenants with active leases found");
+    }
+
+    const invoicesToCreate = activeTenants.map((t) => {
+      const activeLease = (t.leases as any[])?.find((l: any) => l.status === "active");
+      const amount = Number(activeLease?.rent_amount ?? (t.unit as any)?.rent_amount ?? 0);
+      return {
+        tenant_id: t.id,
+        amount,
+        due_date: dueDate,
+        invoice_number: `INV-${t.id.slice(0, 4).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
+        notes: `Rent for ${monthLabel}`,
+      };
+    });
+
+    try {
+      await bulkCreate.mutateAsync(invoicesToCreate);
+      toast.success(`Generated ${invoicesToCreate.length} invoices for ${monthLabel}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate invoices");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -62,36 +122,52 @@ export default function Invoices() {
           <h1 className="font-heading text-2xl font-bold text-foreground">Invoices</h1>
           <p className="mt-1 text-sm text-muted-foreground">{invoices?.length ?? 0} invoices</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="hero" className="gap-2"><Plus className="h-4 w-4" /> Create Invoice</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create Invoice</DialogTitle></DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div>
-                <Label>Tenant</Label>
-                <Select value={form.tenant_id} onValueChange={(v) => setForm({ ...form, tenant_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select tenant" /></SelectTrigger>
-                  <SelectContent>
-                    {tenants?.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleBulkGenerate}
+            disabled={bulkCreate.isPending}
+          >
+            <RefreshCw className="h-4 w-4" />
+            {bulkCreate.isPending ? "Generating..." : "Bulk Generate"}
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant="hero" className="gap-2"><Plus className="h-4 w-4" /> Create Invoice</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Create Invoice</DialogTitle></DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div>
+                  <Label>Tenant</Label>
+                  <Select value={form.tenant_id} onValueChange={(v) => {
+                    const t = tenants?.find((t) => t.id === v);
+                    const lease = (t?.leases as any[])?.find((l: any) => l.status === "active");
+                    const amount = lease?.rent_amount ?? (t?.unit as any)?.rent_amount ?? "";
+                    setForm({ ...form, tenant_id: v, amount: amount ? String(amount) : form.amount });
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Select tenant" /></SelectTrigger>
+                    <SelectContent>
+                      {tenants?.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label>Amount (KES)</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="25000" /></div>
+                  <div><Label>Due Date</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
+                </div>
+                <div><Label>Invoice Number (optional)</Label><Input value={form.invoice_number} onChange={(e) => setForm({ ...form, invoice_number: e.target.value })} placeholder="Auto-generated" /></div>
+                <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Rent for July 2026" /></div>
+                <Button onClick={handleCreate} disabled={createInvoice.isPending} className="w-full">
+                  {createInvoice.isPending ? "Creating..." : "Create Invoice"}
+                </Button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label>Amount (KES)</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="25000" /></div>
-                <div><Label>Due Date</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
-              </div>
-              <div><Label>Invoice Number (optional)</Label><Input value={form.invoice_number} onChange={(e) => setForm({ ...form, invoice_number: e.target.value })} placeholder="Auto-generated" /></div>
-              <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Rent for July 2026" /></div>
-              <Button onClick={handleCreate} disabled={createInvoice.isPending} className="w-full">
-                {createInvoice.isPending ? "Creating..." : "Create Invoice"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -113,7 +189,7 @@ export default function Invoices() {
         <div className="stat-card flex flex-col items-center justify-center py-16 text-center">
           <FileText className="h-12 w-12 text-muted-foreground/40" />
           <h3 className="mt-4 font-heading text-lg font-semibold text-card-foreground">No invoices yet</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Create your first invoice to start billing tenants</p>
+          <p className="mt-1 text-sm text-muted-foreground">Create your first invoice or use Bulk Generate to bill all tenants at once</p>
         </div>
       ) : (
         <div className="stat-card overflow-x-auto p-0">
@@ -125,6 +201,7 @@ export default function Invoices() {
                 <th className="px-6 py-3 text-right font-medium text-muted-foreground">Amount</th>
                 <th className="px-6 py-3 text-left font-medium text-muted-foreground">Due Date</th>
                 <th className="px-6 py-3 text-left font-medium text-muted-foreground">Status</th>
+                <th className="px-6 py-3 text-right font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -140,7 +217,32 @@ export default function Invoices() {
                     <td className="px-6 py-4 text-right font-medium text-card-foreground">KES {Number(inv.amount).toLocaleString()}</td>
                     <td className="px-6 py-4 text-muted-foreground">{new Date(inv.due_date).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <Badge className={statusColors[inv.status] ?? ""} variant="secondary">{inv.status}</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex items-center gap-1 rounded-full focus:outline-none">
+                            <Badge className={`${statusColors[inv.status] ?? ""} cursor-pointer`} variant="secondary">
+                              {inv.status}
+                            </Badge>
+                            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          {statusOptions.filter((s) => s !== inv.status).map((s) => (
+                            <DropdownMenuItem key={s} onClick={() => handleUpdateStatus(inv.id, s)} className="capitalize">
+                              Mark as {s}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDelete(inv.id, inv.invoice_number)}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                        title="Delete invoice"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 );

@@ -10,7 +10,7 @@ export function useProperties() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("*, units(id, unit_number, status, rent_amount)")
+        .select("*, units(id, unit_number, status, rent_amount, bedrooms, bathrooms)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -44,6 +44,42 @@ export function useCreateProperty() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+    },
+  });
+}
+
+export function useUpdateProperty() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: {
+      id: string;
+      name?: string;
+      address?: string;
+      city?: string;
+      property_type?: string;
+      description?: string;
+    }) => {
+      const { error } = await supabase.from("properties").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+    },
+  });
+}
+
+export function useDeleteProperty() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("properties").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
   });
 }

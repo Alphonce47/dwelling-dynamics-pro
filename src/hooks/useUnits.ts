@@ -43,6 +43,28 @@ export function useCreateUnit() {
   });
 }
 
+export function useUpdateUnit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: {
+      id: string;
+      unit_number?: string;
+      rent_amount?: number;
+      bedrooms?: number;
+      bathrooms?: number;
+      status?: string;
+    }) => {
+      const { error } = await supabase.from("units").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+    },
+  });
+}
+
 export function useUpdateUnitStatus() {
   const queryClient = useQueryClient();
 
@@ -56,6 +78,21 @@ export function useUpdateUnitStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+    },
+  });
+}
+
+export function useDeleteUnit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("units").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
   });
 }

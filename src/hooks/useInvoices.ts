@@ -12,7 +12,7 @@ export function useInvoices() {
         .from("invoices")
         .select(`
           *,
-          tenant:tenants(full_name, phone, unit:units(unit_number, property:properties(name)))
+          tenant:tenants(full_name, phone, unit:units(unit_number, rent_amount, property:properties(name)))
         `)
         .order("due_date", { ascending: false });
 
@@ -41,6 +41,55 @@ export function useCreateInvoice() {
         .select()
         .single();
 
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+export function useUpdateInvoiceStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+export function useDeleteInvoice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("invoices").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+export function useBulkCreateInvoices() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invoices: {
+      tenant_id: string;
+      amount: number;
+      due_date: string;
+      invoice_number: string;
+      notes?: string;
+    }[]) => {
+      const { data, error } = await supabase.from("invoices").insert(invoices).select();
       if (error) throw error;
       return data;
     },
