@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Home, ArrowLeft, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { linkTenantByEmail } from "@/hooks/useTenantRecord";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,8 +19,17 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const redirectAfterLogin = async (userId: string) => {
-    // Check if this user has a tenant record — if so, send them to tenant portal
+  const redirectAfterLogin = async (userId: string, userMetadata?: Record<string, any>) => {
+    // 1. If the user explicitly registered as a tenant, always go to the tenant portal
+    //    (they'll see "Account Not Linked" if their landlord hasn't added them yet)
+    if (userMetadata?.role === "tenant") {
+      await linkTenantByEmail(userId, userMetadata.email ?? email);
+      navigate("/tenant");
+      return;
+    }
+
+    // 2. Check whether this user has a linked tenant record (covers legacy accounts
+    //    that pre-date the role metadata field)
     const { data } = await supabase.from("tenants").select("id").eq("user_id", userId).maybeSingle();
     if (data) {
       navigate("/tenant");
@@ -41,7 +51,7 @@ export default function Login() {
         toast({ title: "Login failed", description: error.message, variant: "destructive" });
       }
     } else if (data.user) {
-      await redirectAfterLogin(data.user.id);
+      await redirectAfterLogin(data.user.id, data.user.user_metadata);
     }
   };
 
