@@ -14,7 +14,7 @@ export function useTenantRecord() {
           *,
           unit:units(
             id, unit_number, rent_amount, status, floor, bedrooms, bathrooms,
-            property:properties(id, name, address, city, country)
+            property:properties(id, name, address, city, country, owner_id)
           ),
           leases(*)
         `)
@@ -71,6 +71,67 @@ export function useMyMaintenance(tenantId: string | undefined) {
       return data;
     },
     enabled: !!tenantId,
+  });
+}
+
+export function useMyMessages(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["my-messages", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+
+      // Enrich with names from profiles
+      const userIds = [...new Set(data.flatMap((m) => [m.sender_id, m.receiver_id]))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", userIds);
+
+      const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.user_id, p.full_name]));
+
+      return data.map((m) => ({
+        ...m,
+        sender_name: profileMap[m.sender_id] ?? "Unknown",
+        receiver_name: profileMap[m.receiver_id] ?? "Unknown",
+      }));
+    },
+    enabled: !!userId,
+  });
+}
+
+export function useSendTenantMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (msg: {
+      receiver_id: string;
+      subject?: string;
+      body: string;
+      tenant_id?: string;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("messages")
+        .insert({ ...msg, sender_id: user.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-messages"] });
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+    },
   });
 }
 

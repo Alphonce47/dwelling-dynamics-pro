@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenantRecord } from "@/hooks/useTenantRecord";
+import TenantNotLinked from "@/pages/tenant/TenantNotLinked";
 
 export default function TenantRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -15,7 +16,9 @@ export default function TenantRoute({ children }: { children: React.ReactNode })
   }
 
   if (!user) return <Navigate to="/login" replace />;
-  if (!tenantRecord) return <Navigate to="/tenant/not-linked" replace />;
+
+  // Render the not-linked page inline — no redirect to avoid route conflicts
+  if (!tenantRecord) return <TenantNotLinked />;
 
   return <>{children}</>;
 }

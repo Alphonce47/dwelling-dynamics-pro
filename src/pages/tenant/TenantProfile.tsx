@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTenantRecord, useUpdateTenantProfile } from "@/hooks/useTenantRecord";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Phone, Mail, Shield, Home } from "lucide-react";
+import { User, Phone, Shield, Home } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TenantProfile() {
@@ -13,21 +13,22 @@ export default function TenantProfile() {
   const updateProfile = useUpdateTenantProfile();
 
   const [form, setForm] = useState({
-    phone: tenant?.phone ?? "",
-    email: tenant?.email ?? "",
-    emergency_contact: tenant?.emergency_contact ?? "",
-    emergency_phone: tenant?.emergency_phone ?? "",
+    phone: "",
+    email: "",
+    emergency_contact: "",
+    emergency_phone: "",
   });
 
-  // Sync form when tenant loads
-  if (!isLoading && tenant && form.phone === "" && tenant.phone) {
-    setForm({
-      phone: tenant.phone ?? "",
-      email: tenant.email ?? "",
-      emergency_contact: tenant.emergency_contact ?? "",
-      emergency_phone: tenant.emergency_phone ?? "",
-    });
-  }
+  useEffect(() => {
+    if (tenant) {
+      setForm({
+        phone: tenant.phone ?? "",
+        email: tenant.email ?? "",
+        emergency_contact: tenant.emergency_contact ?? "",
+        emergency_phone: tenant.emergency_phone ?? "",
+      });
+    }
+  }, [tenant?.id]);
 
   const handleSave = async () => {
     if (!tenant) return;
@@ -70,11 +71,11 @@ export default function TenantProfile() {
         <div>
           <Label>Login Email</Label>
           <Input value={user?.email ?? ""} disabled className="mt-1 bg-muted" />
-          <p className="mt-1 text-xs text-muted-foreground">Email cannot be changed here</p>
+          <p className="mt-1 text-xs text-muted-foreground">Login email cannot be changed here</p>
         </div>
         {tenant?.id_number && (
           <div>
-            <Label>ID Number</Label>
+            <Label>ID / Passport Number</Label>
             <Input value={tenant.id_number} disabled className="mt-1 bg-muted" />
           </div>
         )}
@@ -146,24 +147,26 @@ export default function TenantProfile() {
           <h2 className="font-heading text-lg font-semibold text-card-foreground">Rental Details</h2>
         </div>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between py-1.5 border-b">
+          <div className="flex justify-between border-b py-1.5">
             <span className="text-muted-foreground">Property</span>
             <span className="font-medium text-card-foreground">{property?.name ?? "—"}</span>
           </div>
-          <div className="flex justify-between py-1.5 border-b">
+          <div className="flex justify-between border-b py-1.5">
             <span className="text-muted-foreground">Unit</span>
             <span className="font-medium text-card-foreground">{unit ? `Unit ${unit.unit_number}` : "—"}</span>
           </div>
+          {property?.address && (
+            <div className="flex justify-between border-b py-1.5">
+              <span className="text-muted-foreground">Address</span>
+              <span className="font-medium text-card-foreground">{property.address}, {property.city}</span>
+            </div>
+          )}
           {tenant?.move_in_date && (
-            <div className="flex justify-between py-1.5 border-b">
+            <div className="flex justify-between border-b py-1.5">
               <span className="text-muted-foreground">Move-in Date</span>
               <span className="font-medium text-card-foreground">{new Date(tenant.move_in_date).toLocaleDateString()}</span>
             </div>
           )}
-          <div className="flex justify-between py-1.5">
-            <span className="text-muted-foreground">Location</span>
-            <span className="font-medium text-card-foreground">{property?.city ?? "—"}</span>
-          </div>
         </div>
       </div>
     </div>

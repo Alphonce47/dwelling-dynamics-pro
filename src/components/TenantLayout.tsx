@@ -1,25 +1,29 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Receipt, Wrench, User, LogOut, Building2, Menu, X } from "lucide-react";
+import { Home, Receipt, Wrench, User, LogOut, Building2, Menu, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTenantRecord } from "@/hooks/useTenantRecord";
+import { useTenantRecord, useMyMessages } from "@/hooks/useTenantRecord";
 
 const navItems = [
   { path: "/tenant", label: "My Home", icon: Home, exact: true },
   { path: "/tenant/rent", label: "My Rent", icon: Receipt },
   { path: "/tenant/maintenance", label: "Maintenance", icon: Wrench },
+  { path: "/tenant/messages", label: "Messages", icon: MessageSquare },
   { path: "/tenant/profile", label: "My Profile", icon: User },
 ];
 
 export default function TenantLayout() {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { data: tenant } = useTenantRecord();
+  const { data: messages } = useMyMessages(user?.id);
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const unit = tenant?.unit as any;
   const property = unit?.property;
+
+  const unreadCount = messages?.filter((m) => !m.is_read && m.receiver_id === user?.id).length ?? 0;
 
   const handleSignOut = async () => {
     await signOut();
@@ -60,6 +64,7 @@ export default function TenantLayout() {
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const active = isActive(item.path, item.exact);
+          const isMessages = item.path === "/tenant/messages";
           return (
             <Link
               key={item.path}
@@ -72,7 +77,12 @@ export default function TenantLayout() {
               }`}
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {isMessages && unreadCount > 0 && (
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${active ? "bg-primary-foreground text-primary" : "bg-primary text-primary-foreground"}`}>
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -116,7 +126,11 @@ export default function TenantLayout() {
             <Menu className="h-6 w-6" />
           </button>
           <div className="font-heading text-sm font-bold text-foreground">NyumbaHub</div>
-          <div className="w-6" />
+          {unreadCount > 0 && (
+            <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+              {unreadCount}
+            </span>
+          )}
         </header>
 
         {/* Page content */}

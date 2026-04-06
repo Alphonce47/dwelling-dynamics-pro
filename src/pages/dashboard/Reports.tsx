@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, AlertTriangle, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePayments } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -51,6 +52,27 @@ export default function Reports() {
     return { totalCollected, totalOutstanding, overdueCount, totalProperties };
   }, [payments, invoices, properties]);
 
+  const exportCSV = () => {
+    const rows = [
+      ["Month", "Amount Collected (KES)"],
+      ...monthlyData.map((d) => [d.month, d.collected.toString()]),
+      [],
+      ["Summary", ""],
+      ["Total Collected", stats.totalCollected.toString()],
+      ["Outstanding", stats.totalOutstanding.toString()],
+      ["Overdue Invoices", stats.overdueCount.toString()],
+      ["Properties", stats.totalProperties.toString()],
+    ];
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nyumbahub-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -61,9 +83,14 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold text-foreground">Reports & Analytics</h1>
-        <p className="text-sm text-muted-foreground">Financial overview and collection trends</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-foreground">Reports & Analytics</h1>
+          <p className="text-sm text-muted-foreground">Financial overview and collection trends</p>
+        </div>
+        <Button variant="outline" className="gap-2 self-start" onClick={exportCSV}>
+          <Download className="h-4 w-4" /> Export CSV
+        </Button>
       </div>
 
       {/* Summary cards */}

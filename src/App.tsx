@@ -24,8 +24,8 @@ import TenantLayout from "./components/TenantLayout";
 import TenantOverview from "./pages/tenant/TenantOverview";
 import TenantRent from "./pages/tenant/TenantRent";
 import TenantMaintenance from "./pages/tenant/TenantMaintenance";
+import TenantMessages from "./pages/tenant/TenantMessages";
 import TenantProfile from "./pages/tenant/TenantProfile";
-import TenantNotLinked from "./pages/tenant/TenantNotLinked";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,7 +42,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
-            {/* Tenant portal */}
+            {/* Tenant portal — TenantRoute handles "not linked" inline */}
             <Route
               path="/tenant"
               element={
@@ -54,18 +54,9 @@ const App = () => (
               <Route index element={<TenantOverview />} />
               <Route path="rent" element={<TenantRent />} />
               <Route path="maintenance" element={<TenantMaintenance />} />
+              <Route path="messages" element={<TenantMessages />} />
               <Route path="profile" element={<TenantProfile />} />
             </Route>
-
-            {/* Tenant not linked page (protected but no tenant record required) */}
-            <Route
-              path="/tenant/not-linked"
-              element={
-                <ProtectedRoute>
-                  <TenantNotLinked />
-                </ProtectedRoute>
-              }
-            />
 
             {/* Landlord / manager dashboard */}
             <Route
