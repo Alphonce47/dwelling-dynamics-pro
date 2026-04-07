@@ -71,6 +71,23 @@ export default function Invoices() {
     }
   };
 
+  const handleDownloadPdf = async (invoiceId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("generate-invoice-pdf", {
+        body: { invoice_id: invoiceId },
+      });
+      if (res.error) throw res.error;
+      // The function returns HTML — open in new tab for print/save
+      const blob = new Blob([res.data], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      toast.success("Invoice opened — use Ctrl+P to save as PDF");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate invoice");
+    }
+  };
+
   const handleBulkGenerate = async () => {
     const today = new Date();
     const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 1).toISOString().slice(0, 10);
