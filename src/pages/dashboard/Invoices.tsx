@@ -253,7 +253,14 @@ export default function Invoices() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => handleDownloadPdf(inv.id)}
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                        title="Download invoice"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handleDelete(inv.id, inv.invoice_number)}
                         className="text-muted-foreground hover:text-destructive transition-colors"
