@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { FileText, Plus, Trash2, RefreshCw, ChevronDown } from "lucide-react";
+import { FileText, Plus, Trash2, RefreshCw, ChevronDown, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
