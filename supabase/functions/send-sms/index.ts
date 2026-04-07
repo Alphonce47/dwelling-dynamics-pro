@@ -1,5 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.49.1/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const AT_URL = "https://api.africastalking.com/version1/messaging";
 const AT_SANDBOX_URL = "https://api.sandbox.africastalking.com/version1/messaging";
