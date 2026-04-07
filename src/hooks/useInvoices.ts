@@ -54,7 +54,7 @@ export function useUpdateInvoiceStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: "pending" | "paid" | "overdue" | "cancelled" | "partial" }) => {
       const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
       if (error) throw error;
     },

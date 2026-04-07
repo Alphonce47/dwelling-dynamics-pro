@@ -51,7 +51,7 @@ export default function Invoices() {
     }
   };
 
-  const handleUpdateStatus = async (id: string, status: string) => {
+  const handleUpdateStatus = async (id: string, status: "pending" | "paid" | "overdue" | "cancelled" | "partial") => {
     try {
       await updateStatus.mutateAsync({ id, status });
       toast.success(`Invoice marked as ${status}`);
@@ -228,7 +228,7 @@ export default function Invoices() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
                           {statusOptions.filter((s) => s !== inv.status).map((s) => (
-                            <DropdownMenuItem key={s} onClick={() => handleUpdateStatus(inv.id, s)} className="capitalize">
+                            <DropdownMenuItem key={s} onClick={() => handleUpdateStatus(inv.id, s as "pending" | "paid" | "overdue" | "cancelled" | "partial")} className="capitalize">
                               Mark as {s}
                             </DropdownMenuItem>
                           ))}

@@ -30,16 +30,16 @@ export function useRecordPayment() {
     mutationFn: async (payment: {
       tenant_id: string;
       amount: number;
-      method: string;
+      method: "mpesa" | "bank_equity" | "bank_kcb" | "bank_coop" | "cash" | "international_transfer";
       transaction_ref?: string;
       phone_number?: string;
       invoice_id?: string;
       payment_date?: string;
-      status?: string;
+      status?: "confirmed" | "pending" | "failed" | "reversed";
     }) => {
       const { data, error } = await supabase
         .from("payments")
-        .insert({ status: "confirmed", payment_date: new Date().toISOString(), ...payment })
+        .insert([{ status: "confirmed" as const, payment_date: new Date().toISOString(), ...payment }])
         .select()
         .single();
       if (error) throw error;

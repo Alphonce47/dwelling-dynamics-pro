@@ -43,7 +43,7 @@ export default function TenantMaintenance() {
         unit_id: unit.id,
         title: form.title,
         description: form.description || undefined,
-        priority: form.priority,
+        priority: form.priority as "low" | "medium" | "high" | "urgent",
       });
       toast.success("Maintenance request submitted");
       setOpen(false);

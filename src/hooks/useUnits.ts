@@ -53,7 +53,7 @@ export function useUpdateUnit() {
       rent_amount?: number;
       bedrooms?: number;
       bathrooms?: number;
-      status?: string;
+      status?: "vacant" | "occupied" | "maintenance";
     }) => {
       const { error } = await supabase.from("units").update(updates).eq("id", id);
       if (error) throw error;

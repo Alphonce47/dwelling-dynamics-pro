@@ -144,11 +144,11 @@ export function useSubmitMaintenance() {
       unit_id: string;
       title: string;
       description?: string;
-      priority?: string;
+      priority?: "low" | "medium" | "high" | "urgent";
     }) => {
       const { data, error } = await supabase
         .from("maintenance_requests")
-        .insert({ status: "open", priority: "medium", ...req })
+        .insert([{ status: "open" as const, priority: "medium" as const, ...req }])
         .select()
         .single();
       if (error) throw error;
