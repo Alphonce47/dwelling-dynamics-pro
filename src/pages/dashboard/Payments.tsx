@@ -64,7 +64,7 @@ export default function Payments() {
       await recordPayment.mutateAsync({
         tenant_id: form.tenant_id,
         amount: Number(form.amount),
-        method: form.method,
+        method: form.method as "mpesa" | "bank_equity" | "bank_kcb" | "bank_coop" | "cash" | "international_transfer",
         transaction_ref: form.transaction_ref || undefined,
         phone_number: form.phone_number || undefined,
         invoice_id: form.invoice_id || undefined,

@@ -144,7 +144,7 @@ export function useSubmitMaintenance() {
       unit_id: string;
       title: string;
       description?: string;
-      priority?: string;
+      priority?: "low" | "medium" | "high" | "urgent";
     }) => {
       const { data, error } = await supabase
         .from("maintenance_requests")
