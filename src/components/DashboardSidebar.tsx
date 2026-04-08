@@ -1,13 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home, Building2, Users, CreditCard, FileText, BarChart3,
-  MessageSquare, Wrench, DoorOpen, Settings, LogOut, ChevronLeft, Menu, Sun, Moon
+  MessageSquare, Wrench, DoorOpen, Settings, LogOut, ChevronLeft, Menu, Sun, Moon,
+  DollarSign, Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/components/ThemeProvider";
+import NotificationCenter from "@/components/NotificationCenter";
 
 const navItems = [
   { label: "Overview", icon: Home, path: "/dashboard" },
@@ -15,10 +17,12 @@ const navItems = [
   { label: "Tenants", icon: Users, path: "/dashboard/tenants" },
   { label: "Payments", icon: CreditCard, path: "/dashboard/payments" },
   { label: "Invoices", icon: FileText, path: "/dashboard/invoices" },
+  { label: "Expenses", icon: DollarSign, path: "/dashboard/expenses" },
   { label: "Maintenance", icon: Wrench, path: "/dashboard/maintenance" },
   { label: "Messages", icon: MessageSquare, path: "/dashboard/messages" },
   { label: "Vacancies", icon: DoorOpen, path: "/dashboard/vacancies" },
   { label: "Reports", icon: BarChart3, path: "/dashboard/reports" },
+  { label: "Audit Log", icon: Shield, path: "/dashboard/audit-log" },
   { label: "Settings", icon: Settings, path: "/dashboard/settings" },
 ];
 
@@ -59,6 +63,7 @@ export default function DashboardSidebar() {
           </Link>
         )}
         <div className="flex items-center gap-1">
+          <NotificationCenter />
           <button
             onClick={toggleTheme}
             className="rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"

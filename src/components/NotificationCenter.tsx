@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useLeases } from "@/hooks/useLeases";
-import { useMaintenance } from "@/hooks/useMaintenance";
+import { useMaintenanceRequests } from "@/hooks/useMaintenance";
 import { usePayments } from "@/hooks/usePayments";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ type Notification = {
 export default function NotificationCenter() {
   const { data: invoices } = useInvoices();
   const { data: leases } = useLeases();
-  const { data: maintenance } = useMaintenance();
+  const { data: maintenance } = useMaintenanceRequests();
   const { data: payments } = usePayments();
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try {
