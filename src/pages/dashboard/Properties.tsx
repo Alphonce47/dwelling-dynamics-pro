@@ -1,6 +1,6 @@
-import { Building2, Plus, MapPin, Users, DoorOpen, Pencil, Trash2, MoreVertical } from "lucide-react";
+import { Building2, Plus, MapPin, Users, DoorOpen, Pencil, Trash2, MoreVertical, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useProperties, useCreateProperty, useUpdateProperty, useDeleteProperty } from "@/hooks/useProperties";
 import { useCreateUnit, useUpdateUnit, useDeleteUnit } from "@/hooks/useUnits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,12 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 
 const propertyTypes = ["apartment", "townhouse", "villa", "bedsitter", "commercial"];
+const PAGE_SIZE = 12;
 
 const emptyPropertyForm = { name: "", address: "", city: "Nairobi", property_type: "apartment" };
 const emptyUnitForm = { unit_number: "", rent_amount: "", bedrooms: "1", bathrooms: "1" };
 
 export default function Properties() {
   const { data: properties, isLoading } = useProperties();
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [page, setPage] = useState(1);
   const createProperty = useCreateProperty();
   const updateProperty = useUpdateProperty();
   const deleteProperty = useDeleteProperty();
@@ -128,6 +132,21 @@ export default function Properties() {
     }
   };
 
+  const filtered = useMemo(() => {
+    let list = properties ?? [];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (p) => p.name.toLowerCase().includes(q) || (p.address ?? "").toLowerCase().includes(q) || p.city.toLowerCase().includes(q)
+      );
+    }
+    if (typeFilter !== "all") list = list.filter((p) => p.property_type === typeFilter);
+    return list;
+  }, [properties, search, typeFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -143,22 +162,54 @@ export default function Properties() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold text-foreground">Properties</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{properties?.length ?? 0} properties, {totalUnits} total units</p>
+          <p className="mt-1 text-sm text-muted-foreground">{filtered.length} of {properties?.length ?? 0} properties · {totalUnits} total units</p>
         </div>
         <Button variant="hero" className="gap-2" onClick={openNewProperty}>
           <Plus className="h-4 w-4" /> Add Property
         </Button>
       </div>
 
-      {properties?.length === 0 ? (
+      {/* Search + Filter */}
+      {(properties?.length ?? 0) > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, address, or city…"
+              className="pl-10"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {propertyTypes.map((t) => (
+                  <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
         <div className="stat-card flex flex-col items-center justify-center py-16 text-center">
           <Building2 className="h-12 w-12 text-muted-foreground/40" />
-          <h3 className="mt-4 font-heading text-lg font-semibold text-card-foreground">No properties yet</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Add your first property to get started</p>
+          <h3 className="mt-4 font-heading text-lg font-semibold text-card-foreground">
+            {search || typeFilter !== "all" ? "No matching properties" : "No properties yet"}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {search || typeFilter !== "all" ? "Try adjusting your search or filter" : "Add your first property to get started"}
+          </p>
         </div>
       ) : (
+        <>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {properties?.map((p) => {
+          {pageData?.map((p) => {
             const units = p.units ?? [];
             const occupied = units.filter((u: any) => u.status === "occupied").length;
             const totalRent = units.reduce((a: number, u: any) => a + Number(u.rent_amount ?? 0), 0);
@@ -261,6 +312,25 @@ export default function Properties() {
             );
           })}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="font-medium">{page} / {totalPages}</span>
+              <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+        </>
       )}
 
       {/* Property dialog (create/edit) */}

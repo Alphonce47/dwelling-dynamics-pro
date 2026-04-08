@@ -1,14 +1,19 @@
-import { Building2, Users, CreditCard, ArrowUpRight, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Building2, Users, CreditCard, ArrowUpRight, TrendingUp, AlertTriangle, Bell, X } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useProperties } from "@/hooks/useProperties";
 import { useTenants } from "@/hooks/useTenants";
 import { usePayments } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useProfile } from "@/hooks/useProfile";
+import { useLeases } from "@/hooks/useLeases";
 import { Link } from "react-router-dom";
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 const formatKES = (v: number) =>
   v >= 1_000_000 ? `KES ${(v / 1_000_000).toFixed(1)}M` : `KES ${(v / 1000).toFixed(0)}K`;
+
+const DAYS_30 = 30 * 24 * 60 * 60 * 1000;
 
 export default function Overview() {
   const { data: properties } = useProperties();
@@ -16,6 +21,11 @@ export default function Overview() {
   const { data: payments } = usePayments();
   const { data: invoices } = useInvoices();
   const { data: profile } = useProfile();
+  const { data: leases } = useLeases();
+  const [dismissedOnboarding, setDismissedOnboarding] = useState(() =>
+    localStorage.getItem("nyumbahub-onboarding-dismissed") === "true"
+  );
+  const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
 
   const allUnits = properties?.flatMap((p) => p.units ?? []) ?? [];
   const occupied = allUnits.filter((u: any) => u.status === "occupied").length;
@@ -25,23 +35,41 @@ export default function Overview() {
   const confirmed = payments?.filter((p) => p.status === "confirmed") ?? [];
   const totalCollected = confirmed.reduce((a, p) => a + Number(p.amount), 0);
 
-  // This month's collection
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthCollected = confirmed
     .filter((p) => new Date(p.payment_date) >= monthStart)
     .reduce((a, p) => a + Number(p.amount), 0);
 
-  // Expected rent = sum of all occupied unit rents
   const expectedRent = allUnits
     .filter((u: any) => u.status === "occupied")
     .reduce((a: number, u: any) => a + Number(u.rent_amount ?? 0), 0);
 
   const collectionPct = expectedRent > 0 ? Math.min(100, Math.round((monthCollected / expectedRent) * 100)) : 0;
 
-  // Overdue invoices
   const overdueInvoices = invoices?.filter((i) => i.status === "overdue") ?? [];
   const overdueAmount = overdueInvoices.reduce((a, i) => a + Number(i.amount), 0);
+
+  // Lease expiry alerts — leases expiring within 30 days
+  const expiringLeases = (leases ?? []).filter((l: any) => {
+    if (l.status !== "active") return false;
+    const end = new Date(l.end_date).getTime();
+    const diff = end - now.getTime();
+    return diff > 0 && diff <= DAYS_30;
+  });
+
+  const alerts = [
+    ...expiringLeases.map((l: any) => ({
+      id: `lease-${l.id}`,
+      type: "warning" as const,
+      message: `Lease for ${l.tenant?.full_name ?? "a tenant"} expires on ${new Date(l.end_date).toLocaleDateString()}`,
+    })),
+    ...overdueInvoices.slice(0, 3).map((inv: any) => ({
+      id: `inv-${inv.id}`,
+      type: "error" as const,
+      message: `Invoice ${inv.invoice_number} overdue — KES ${Number(inv.amount).toLocaleString()} from ${inv.tenant?.full_name ?? "tenant"}`,
+    })),
+  ].filter((a) => !dismissedAlerts.includes(a.id));
 
   const occupancyData = [
     { name: "Occupied", value: occupied, color: "hsl(152, 55%, 36%)" },
@@ -59,6 +87,13 @@ export default function Overview() {
   const recentPayments = (payments ?? []).slice(0, 5);
   const monthName = now.toLocaleString("default", { month: "long" });
 
+  const showOnboarding = !dismissedOnboarding && (properties?.length ?? 0) === 0;
+
+  const handleDismissOnboarding = () => {
+    localStorage.setItem("nyumbahub-onboarding-dismissed", "true");
+    setDismissedOnboarding(true);
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -67,6 +102,42 @@ export default function Overview() {
           Welcome back{profile?.full_name ? `, ${profile.full_name}` : ""}. Here's your portfolio at a glance.
         </p>
       </div>
+
+      {/* Onboarding wizard for new users */}
+      {showOnboarding && (
+        <OnboardingWizard onDismiss={handleDismissOnboarding} />
+      )}
+
+      {/* Notification alerts */}
+      {alerts.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Bell className="h-4 w-4" />
+            <span>{alerts.length} alert{alerts.length > 1 ? "s" : ""} need your attention</span>
+          </div>
+          {alerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={`flex items-start justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${
+                alert.type === "error"
+                  ? "border-destructive/20 bg-destructive/5 text-destructive"
+                  : "border-warning/20 bg-warning/5 text-warning"
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{alert.message}</span>
+              </div>
+              <button
+                onClick={() => setDismissedAlerts((d) => [...d, alert.id])}
+                className="shrink-0 opacity-60 hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -81,7 +152,7 @@ export default function Overview() {
         ))}
       </div>
 
-      {/* This month collection progress */}
+      {/* This month collection + occupancy + recent payments */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="stat-card lg:col-span-1 space-y-4">
           <div className="flex items-center justify-between">
@@ -110,9 +181,16 @@ export default function Overview() {
               </Link>
             </div>
           )}
+          {expiringLeases.length > 0 && (
+            <div className="rounded-lg bg-warning/5 border border-warning/20 p-3">
+              <p className="text-sm font-medium text-warning">{expiringLeases.length} lease{expiringLeases.length > 1 ? "s" : ""} expiring soon</p>
+              <Link to="/dashboard/tenants" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-warning hover:underline">
+                Review leases <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* Occupancy */}
         <div className="stat-card lg:col-span-1">
           <h3 className="font-heading text-lg font-semibold text-card-foreground">Occupancy</h3>
           <p className="text-sm text-muted-foreground">{allUnits.length} total units</p>
@@ -145,7 +223,6 @@ export default function Overview() {
           </div>
         </div>
 
-        {/* Recent Payments */}
         <div className="stat-card lg:col-span-1">
           <div className="flex items-center justify-between">
             <h3 className="font-heading text-lg font-semibold text-card-foreground">Recent Payments</h3>

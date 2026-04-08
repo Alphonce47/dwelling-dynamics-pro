@@ -53,9 +53,56 @@ Routes: Overview, Rent, Maintenance, Messages, Profile.
 - Signup auto-links tenant by email: `linkTenantByEmail()` calls `UPDATE tenants SET user_id = ? WHERE email = ? AND user_id IS NULL`
 - `TenantRoute` renders `TenantNotLinked` (with instructions) when user isn't linked to any tenant record
 
-## Features
+## Implemented Feature Phases
 
-### Landlord Dashboard
+### Phase 1 — Auth & RLS Fixes
+- `ResetPassword` page (`/reset-password`) — handles Supabase PASSWORD_RECOVERY event
+- `EmailConfirmed` page (`/email-confirmed`) — confirms email + links tenant by email + redirects
+- SQL migration: `supabase/migrations/20260408_rls_fixes_and_triggers.sql` (run manually in Supabase SQL Editor)
+  - Payment INSERT/DELETE RLS policies for property owners
+  - Lease INSERT/UPDATE/DELETE RLS policies
+  - Unit status auto-sync trigger (occupied/vacant based on tenant assignment)
+  - Invoice payment sync trigger (marks invoice paid when payment confirmed)
+  - `mark_overdue_invoices()` function + immediate run
+
+### Phase 2 — Dark Mode & Lease Alerts
+- `ThemeProvider` wraps entire app; toggles `dark` class on `<html>`; persists to `nyumbahub-theme` in localStorage
+- Dark mode toggle button in `DashboardSidebar` header (Sun/Moon icon)
+- Lease expiry alerts on Overview — flags leases expiring within 30 days
+- Dismissible alert banners for overdue invoices and expiring leases
+
+### Phase 3 — File & Photo Uploads
+- `FileUpload` component — drag-and-drop, click-to-browse, Supabase Storage upload, preview with remove
+- Photo attachment in Maintenance request creation (uploaded to `documents/maintenance/`)
+- Stored as public URL appended to description; displayed as inline image in maintenance cards
+
+### Phase 4 — Onboarding Wizard
+- `OnboardingWizard` — 4-step wizard: Add Property → Add Unit → Add Tenant → Create Invoice
+- Shown on Overview to landlords with 0 properties
+- Can be dismissed (stored in `nyumbahub-onboarding-dismissed` localStorage key)
+- Skippable per step; success state with confirmation
+
+### Phase 5 — Search, Filters, Pagination, Receipts & Bulk Actions
+
+#### Properties
+- Search by name, address, city; filter by property type; pagination (12/page)
+
+#### Invoices
+- Search by invoice #, tenant, property; filter by status; pagination (20/page)
+- Bulk select → Mark Paid / Delete (with confirmation)
+- Download invoice as printable HTML (Ctrl+P to PDF)
+- CSV export of filtered invoices
+
+#### Payments
+- Search by tenant, property, ref; filter by method + status; pagination (20/page)
+- Printable HTML receipt per payment (with M-Pesa ref, amount, tenant, property, date)
+- CSV export of filtered payments
+
+#### Maintenance
+- Search by title, tenant, property; filter by status + priority; pagination (18/page, card grid)
+- Photo shown inline in card if attached
+
+### Landlord Dashboard (existing)
 - **Properties**: Add/edit/delete property + inline unit management (add/edit/delete units, occupancy bar)
 - **Tenants**: Add/edit/delete; clickable row opens Sheet with unit, lease, invoices, payment history, lease creation; Share Access dialog with copy link + mailto invite
 - **Payments**: Record payment (links to invoice), CSV export; M-Pesa, bank, cash, international
@@ -65,7 +112,6 @@ Routes: Overview, Rent, Maintenance, Messages, Profile.
 - **Vacancies**: Create/toggle vacancy listings for vacant units
 - **Reports**: 6-month collection bar chart, invoice status pie chart, summary KPIs, CSV export
 - **Overview**: KPI cards (properties, units, tenants, revenue), monthly collection progress, overdue alert, occupancy chart, recent payments
-- Forgot password / reset password flow
 
 ### Tenant Portal
 - **My Home**: KPI cards (balance due, last payment, lease info), unit details, overdue alert, quick action links
