@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { CreditCard, Download, Plus, Search, Filter, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { CreditCard, Download, Plus, Search, Filter, FileText, ChevronLeft, ChevronRight, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -130,6 +130,8 @@ export default function Payments() {
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
 
   const tenantInvoices = invoices?.filter(
@@ -151,8 +153,10 @@ export default function Payments() {
     }
     if (methodFilter !== "all") list = list.filter((p) => p.method === methodFilter);
     if (statusFilter !== "all") list = list.filter((p) => p.status === statusFilter);
+    if (dateFrom) list = list.filter((p) => new Date(p.payment_date) >= new Date(dateFrom));
+    if (dateTo) list = list.filter((p) => new Date(p.payment_date) <= new Date(dateTo));
     return list;
-  }, [payments, search, methodFilter, statusFilter]);
+  }, [payments, search, methodFilter, statusFilter, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
-import { FileText, Plus, Trash2, RefreshCw, ChevronDown, Download, Search, Filter, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Plus, Trash2, RefreshCw, ChevronDown, Download, Search, Filter, ChevronLeft, ChevronRight, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -37,6 +36,8 @@ export default function Invoices() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -54,8 +55,10 @@ export default function Invoices() {
       });
     }
     if (statusFilter !== "all") list = list.filter((i) => i.status === statusFilter);
+    if (dateFrom) list = list.filter((i) => new Date(i.due_date) >= new Date(dateFrom));
+    if (dateTo) list = list.filter((i) => new Date(i.due_date) <= new Date(dateTo));
     return list;
-  }, [invoices, search, statusFilter]);
+  }, [invoices, search, statusFilter, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -132,19 +135,114 @@ export default function Invoices() {
     }
   };
 
-  const handleDownloadPdf = async (invoiceId: string) => {
-    try {
-      const res = await supabase.functions.invoke("generate-invoice-pdf", {
-        body: { invoice_id: invoiceId },
-      });
-      if (res.error) throw res.error;
-      const blob = new Blob([res.data], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      toast.success("Invoice opened — use Ctrl+P to save as PDF");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to generate invoice");
-    }
+  const generateInvoiceHtml = (inv: any) => {
+    const tenant = inv.tenant as any;
+    const property = tenant?.unit?.property;
+    const issueDate = new Date().toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" });
+    const dueDate = new Date(inv.due_date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" });
+    const statusColor = inv.status === "paid" ? "#15803d" : inv.status === "overdue" ? "#dc2626" : "#b45309";
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Invoice ${inv.invoice_number}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a2e; padding: 48px; max-width: 680px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 3px solid #2D8B5E; padding-bottom: 24px; }
+    .brand { font-size: 26px; font-weight: 800; color: #2D8B5E; letter-spacing: -0.5px; }
+    .brand-sub { font-size: 12px; color: #888; margin-top: 4px; }
+    .invoice-label h2 { font-size: 28px; font-weight: 800; color: #1a1a2e; text-transform: uppercase; letter-spacing: 3px; }
+    .invoice-label .num { font-size: 13px; color: #666; margin-top: 6px; }
+    .invoice-label .status { display: inline-block; margin-top: 8px; padding: 3px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: ${statusColor}20; color: ${statusColor}; }
+    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 36px; }
+    .meta-block h4 { font-size: 10px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    .meta-block p { font-size: 14px; line-height: 1.7; }
+    .items { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    .items thead tr { background: #f5f5f5; }
+    .items th { text-align: left; padding: 10px 14px; font-size: 11px; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+    .items td { padding: 14px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .items .amount { text-align: right; font-weight: 600; }
+    .totals { display: flex; justify-content: flex-end; margin-bottom: 40px; }
+    .totals-box { width: 260px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #eee; }
+    .totals-row.total { border-bottom: none; border-top: 2px solid #1a1a2e; margin-top: 4px; padding-top: 12px; font-size: 18px; font-weight: 800; color: #2D8B5E; }
+    .footer { border-top: 1px solid #eee; padding-top: 20px; font-size: 12px; color: #999; text-align: center; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="brand">NyumbaHub</div>
+      <div class="brand-sub">Property Management Platform</div>
+    </div>
+    <div class="invoice-label" style="text-align:right">
+      <h2>Invoice</h2>
+      <div class="num">${inv.invoice_number}</div>
+      <div class="status">${inv.status}</div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <div class="meta-block">
+      <h4>Billed To</h4>
+      <p><strong>${tenant?.full_name ?? "—"}</strong></p>
+      ${tenant?.phone ? `<p>${tenant.phone}</p>` : ""}
+      ${tenant?.email ? `<p>${tenant.email}</p>` : ""}
+    </div>
+    <div class="meta-block" style="text-align:right">
+      <h4>Property</h4>
+      <p><strong>${property?.name ?? "—"}</strong></p>
+      <p>Unit ${tenant?.unit?.unit_number ?? "—"}</p>
+      ${property?.city ? `<p>${property.city}</p>` : ""}
+      <h4 style="margin-top:16px">Dates</h4>
+      <p>Issued: ${issueDate}</p>
+      <p>Due: <strong>${dueDate}</strong></p>
+    </div>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="amount" style="text-align:right">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${inv.notes || "Monthly Rent"}</td>
+        <td class="amount">KES ${Number(inv.amount).toLocaleString("en-KE")}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row total">
+        <span>Total Due</span>
+        <span>KES ${Number(inv.amount).toLocaleString("en-KE")}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Please pay by ${dueDate}. Thank you for choosing NyumbaHub.</p>
+    <p style="margin-top:6px">Generated ${new Date().toLocaleDateString("en-KE")} — NyumbaHub Property Management</p>
+  </div>
+</body>
+</html>`;
+  };
+
+  const handleDownloadPdf = (invoiceId: string) => {
+    const inv = invoices?.find((i) => i.id === invoiceId);
+    if (!inv) return toast.error("Invoice not found");
+    const html = generateInvoiceHtml(inv);
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast.success("Invoice opened — use Ctrl+P to save as PDF");
   };
 
   const handleBulkGenerate = async () => {
@@ -281,7 +379,7 @@ export default function Invoices() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
@@ -290,6 +388,15 @@ export default function Invoices() {
               {statusOptions.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-1">
+            <CalendarRange className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Input type="date" className="h-9 w-36 text-xs" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} title="Due date from" />
+            <span className="text-muted-foreground text-xs">–</span>
+            <Input type="date" className="h-9 w-36 text-xs" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} title="Due date to" />
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(""); setDateTo(""); }} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
+            )}
+          </div>
         </div>
         {selected.length > 0 && (
           <div className="flex items-center gap-2">
