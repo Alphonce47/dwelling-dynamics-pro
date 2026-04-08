@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Building2, Users, CreditCard, ArrowUpRight, TrendingUp, AlertTriangle, Bell, X } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useProperties } from "@/hooks/useProperties";
@@ -9,6 +9,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useLeases } from "@/hooks/useLeases";
 import { Link } from "react-router-dom";
 import OnboardingWizard from "@/components/OnboardingWizard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formatKES = (v: number) =>
   v >= 1_000_000 ? `KES ${(v / 1_000_000).toFixed(1)}M` : `KES ${(v / 1000).toFixed(0)}K`;
@@ -26,8 +27,14 @@ export default function Overview() {
     localStorage.getItem("nyumbahub-onboarding-dismissed") === "true"
   );
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
+  const [propertyFilter, setPropertyFilter] = useState("all");
 
-  const allUnits = properties?.flatMap((p) => p.units ?? []) ?? [];
+  const filteredProperties = useMemo(() => {
+    if (propertyFilter === "all") return properties ?? [];
+    return (properties ?? []).filter(p => p.id === propertyFilter);
+  }, [properties, propertyFilter]);
+
+  const allUnits = filteredProperties.flatMap((p) => p.units ?? []);
   const occupied = allUnits.filter((u: any) => u.status === "occupied").length;
   const vacant = allUnits.filter((u: any) => u.status === "vacant").length;
   const maintenance = allUnits.filter((u: any) => u.status === "maintenance").length;
@@ -96,11 +103,26 @@ export default function Overview() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-heading text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Welcome back{profile?.full_name ? `, ${profile.full_name}` : ""}. Here's your portfolio at a glance.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Welcome back{profile?.full_name ? `, ${profile.full_name}` : ""}. Here's your portfolio at a glance.
+          </p>
+        </div>
+        {(properties?.length ?? 0) > 1 && (
+          <Select value={propertyFilter} onValueChange={setPropertyFilter}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="All Properties" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Properties</SelectItem>
+              {properties?.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Onboarding wizard for new users */}
