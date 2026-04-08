@@ -23,6 +23,8 @@ import Settings from "./pages/dashboard/Settings";
 import Messages from "./pages/dashboard/Messages";
 import Vacancies from "./pages/dashboard/Vacancies";
 import Reports from "./pages/dashboard/Reports";
+import Expenses from "./pages/dashboard/Expenses";
+import AuditLog from "./pages/dashboard/AuditLog";
 import TenantLayout from "./components/TenantLayout";
 import TenantOverview from "./pages/tenant/TenantOverview";
 import TenantRent from "./pages/tenant/TenantRent";
@@ -80,6 +82,8 @@ const App = () => (
                 <Route path="messages" element={<Messages />} />
                 <Route path="vacancies" element={<Vacancies />} />
                 <Route path="reports" element={<Reports />} />
+                <Route path="expenses" element={<Expenses />} />
+                <Route path="audit-log" element={<AuditLog />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 
