@@ -27,6 +27,7 @@ export function useCreateUnit() {
       bathrooms?: number;
       floor?: number;
       size_sqm?: number;
+      currency?: string;
     }) => {
       const { data, error } = await supabase
         .from("units")
