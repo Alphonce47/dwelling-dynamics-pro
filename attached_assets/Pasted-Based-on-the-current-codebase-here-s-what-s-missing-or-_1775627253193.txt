@@ -1,0 +1,47 @@
+Based on the current codebase, here's what's missing or could improve NyumbaHub:
+
+### 🔴 Missing / Not Working
+1. **Payment INSERT RLS policy** — landlords can't record payments (only SELECT policy exists)
+2. **Tenant creation for unlinked units** — no RLS policy lets owners insert tenants without a unit
+3. **Forgot/Reset password UI** — no pages exist despite being mentioned in docs
+4. **Email verification flow** — no confirmation page after signup
+5. **Auto-confirm is off** — users can't sign in until email verified, but there's no UX guidance for this
+
+### 🟡 Functional Gaps
+6. **Lease renewal alerts** — no notification when leases are expiring soon
+7. **Overdue invoice auto-marking** — no cron/trigger to flip `pending` → `overdue` past due date
+8. **Receipt generation** — tenants can't download payment receipts
+9. **Document/file uploads** — lease documents, ID copies, maintenance photos (no Storage bucket)
+10. **Bulk SMS** — rent reminders to all tenants with overdue invoices
+11. **Dashboard search/filter** — no global search, no filtering on most tables
+12. **Pagination** — all tables fetch everything, will break at scale
+
+### 🟢 UX Improvements
+13. **Onboarding wizard** — guide new landlords through adding first property → unit → tenant → invoice
+14. **Dark mode toggle** — design tokens exist but no theme switcher
+15. **Notification center** — in-app notifications for new payments, maintenance requests, messages
+16. **Tenant invite flow** — email invite with magic link instead of manual share
+17. **Mobile-responsive tables** — current tables likely overflow on the 759px viewport
+18. **Multi-property dashboard** — filter overview KPIs by property
+19. **Expense tracking** — landlords need to track costs (repairs, taxes, management fees) not just income
+20. **Occupancy rate trends** — historical chart, not just current snapshot
+21. **Bulk actions** — select multiple invoices to mark paid, send reminders
+22. **Export options** — PDF reports, not just CSV
+23. **Audit log viewer** — table exists but no UI to view it
+24. **Role-based nav** — accountant/viewer roles exist in enum but no differentiated access
+
+### 🔵 Advanced / Growth
+25. **Multi-language (i18n)** — Swahili, French for Rwanda
+26. **WhatsApp notifications** — via WhatsApp Business API
+27. **Tenant rating/review system**
+28. **Automated rent escalation** — annual % increase per lease terms
+29. **Tax reports** — withholding tax, VAT summaries for KRA compliance
+30. **Caretaker/agent sub-accounts** — manager role with property-scoped access
+
+Which of these would you like me to implement?
+
+Fix critical RLS and auth gaps
+Add automated alerts and triggers
+Add document and photo uploads
+Build onboarding wizard
+Add search, filters and pagination
