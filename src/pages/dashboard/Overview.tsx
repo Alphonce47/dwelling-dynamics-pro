@@ -30,9 +30,7 @@ export default function Overview() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
   const [propertyFilter, setPropertyFilter] = useState("all");
 
-  useEffect(() => {
-    supabase.rpc("mark_overdue_invoices").catch(() => {});
-  }, []);
+  // mark_overdue_invoices RPC removed — handled by DB trigger instead
 
   const filteredProperties = useMemo(() => {
     if (propertyFilter === "all") return properties ?? [];
