@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Building2, Users, CreditCard, ArrowUpRight, TrendingUp, AlertTriangle, Bell, X } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useProperties } from "@/hooks/useProperties";
@@ -10,7 +10,7 @@ import { useLeases } from "@/hooks/useLeases";
 import { Link } from "react-router-dom";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+
 
 const formatKES = (v: number) =>
   v >= 1_000_000 ? `KES ${(v / 1_000_000).toFixed(1)}M` : `KES ${(v / 1000).toFixed(0)}K`;
