@@ -237,12 +237,14 @@ export default function Invoices() {
   const handleDownloadPdf = (invoiceId: string) => {
     const inv = invoices?.find((i) => i.id === invoiceId);
     if (!inv) return toast.error("Invoice not found");
-    const html = generateInvoiceHtml(inv);
+    let html = generateInvoiceHtml(inv);
+    html = html.replace("</body>", `<script>window.addEventListener('load',function(){window.print();});</script></body>`);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    window.open(url, "_blank");
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-    toast.success("Invoice opened — use Ctrl+P to save as PDF");
+    const win = window.open(url, "_blank");
+    if (!win) toast.info("Allow pop-ups to download the invoice PDF");
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    toast.success("Invoice PDF ready — saving as PDF…");
   };
 
   const handleBulkGenerate = async () => {

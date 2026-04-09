@@ -31,6 +31,7 @@ import TenantRent from "./pages/tenant/TenantRent";
 import TenantMaintenance from "./pages/tenant/TenantMaintenance";
 import TenantMessages from "./pages/tenant/TenantMessages";
 import TenantProfile from "./pages/tenant/TenantProfile";
+import Listing from "./pages/Listing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/listing/:token" element={<Listing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/reset-password" element={<ResetPassword />} />

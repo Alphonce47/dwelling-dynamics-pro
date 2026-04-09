@@ -11,19 +11,19 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/components/ThemeProvider";
 import NotificationCenter from "@/components/NotificationCenter";
 
-const navItems = [
-  { label: "Overview", icon: Home, path: "/dashboard" },
-  { label: "Properties", icon: Building2, path: "/dashboard/properties" },
-  { label: "Tenants", icon: Users, path: "/dashboard/tenants" },
-  { label: "Payments", icon: CreditCard, path: "/dashboard/payments" },
-  { label: "Invoices", icon: FileText, path: "/dashboard/invoices" },
-  { label: "Expenses", icon: DollarSign, path: "/dashboard/expenses" },
-  { label: "Maintenance", icon: Wrench, path: "/dashboard/maintenance" },
-  { label: "Messages", icon: MessageSquare, path: "/dashboard/messages" },
-  { label: "Vacancies", icon: DoorOpen, path: "/dashboard/vacancies" },
-  { label: "Reports", icon: BarChart3, path: "/dashboard/reports" },
-  { label: "Audit Log", icon: Shield, path: "/dashboard/audit-log" },
-  { label: "Settings", icon: Settings, path: "/dashboard/settings" },
+const allNavItems = [
+  { label: "Overview", icon: Home, path: "/dashboard", adminOnly: false },
+  { label: "Properties", icon: Building2, path: "/dashboard/properties", adminOnly: false },
+  { label: "Tenants", icon: Users, path: "/dashboard/tenants", adminOnly: false },
+  { label: "Payments", icon: CreditCard, path: "/dashboard/payments", adminOnly: false },
+  { label: "Invoices", icon: FileText, path: "/dashboard/invoices", adminOnly: false },
+  { label: "Expenses", icon: DollarSign, path: "/dashboard/expenses", adminOnly: false },
+  { label: "Maintenance", icon: Wrench, path: "/dashboard/maintenance", adminOnly: false },
+  { label: "Messages", icon: MessageSquare, path: "/dashboard/messages", adminOnly: false },
+  { label: "Vacancies", icon: DoorOpen, path: "/dashboard/vacancies", adminOnly: false },
+  { label: "Reports", icon: BarChart3, path: "/dashboard/reports", adminOnly: false },
+  { label: "Audit Log", icon: Shield, path: "/dashboard/audit-log", adminOnly: true },
+  { label: "Settings", icon: Settings, path: "/dashboard/settings", adminOnly: false },
 ];
 
 export default function DashboardSidebar() {
@@ -40,6 +40,8 @@ export default function DashboardSidebar() {
     : "??";
 
   const primaryRole = profile?.roles?.[0] ?? "user";
+  const isAdmin = profile?.roles?.includes("admin") ?? false;
+  const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
 
   const handleSignOut = async () => {
     await signOut();
