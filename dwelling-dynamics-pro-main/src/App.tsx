@@ -1,0 +1,101 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import TenantRoute from "@/components/TenantRoute";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
+import EmailConfirmed from "./pages/EmailConfirmed";
+import DashboardLayout from "./components/DashboardLayout";
+import Overview from "./pages/dashboard/Overview";
+import Properties from "./pages/dashboard/Properties";
+import Tenants from "./pages/dashboard/Tenants";
+import Payments from "./pages/dashboard/Payments";
+import Invoices from "./pages/dashboard/Invoices";
+import Maintenance from "./pages/dashboard/Maintenance";
+import Settings from "./pages/dashboard/Settings";
+import Messages from "./pages/dashboard/Messages";
+import Vacancies from "./pages/dashboard/Vacancies";
+import Reports from "./pages/dashboard/Reports";
+import Expenses from "./pages/dashboard/Expenses";
+import AuditLog from "./pages/dashboard/AuditLog";
+import TenantLayout from "./components/TenantLayout";
+import TenantOverview from "./pages/tenant/TenantOverview";
+import TenantRent from "./pages/tenant/TenantRent";
+import TenantMaintenance from "./pages/tenant/TenantMaintenance";
+import TenantMessages from "./pages/tenant/TenantMessages";
+import TenantProfile from "./pages/tenant/TenantProfile";
+import Listing from "./pages/Listing";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/listing/:token" element={<Listing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/email-confirmed" element={<EmailConfirmed />} />
+
+              <Route
+                path="/tenant"
+                element={
+                  <TenantRoute>
+                    <TenantLayout />
+                  </TenantRoute>
+                }
+              >
+                <Route index element={<TenantOverview />} />
+                <Route path="rent" element={<TenantRent />} />
+                <Route path="maintenance" element={<TenantMaintenance />} />
+                <Route path="messages" element={<TenantMessages />} />
+                <Route path="profile" element={<TenantProfile />} />
+              </Route>
+
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Overview />} />
+                <Route path="properties" element={<Properties />} />
+                <Route path="tenants" element={<Tenants />} />
+                <Route path="payments" element={<Payments />} />
+                <Route path="invoices" element={<Invoices />} />
+                <Route path="maintenance" element={<Maintenance />} />
+                <Route path="messages" element={<Messages />} />
+                <Route path="vacancies" element={<Vacancies />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="expenses" element={<Expenses />} />
+                <Route path="audit-log" element={<AuditLog />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
+);
+
+export default App;
